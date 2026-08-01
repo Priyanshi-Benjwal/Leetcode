@@ -1,0 +1,98 @@
+# Binary Exponentiation (Fast Power) – Quick Notes
+
+### Core Idea
+
+Instead of multiplying `x` by itself `n` times (`O(n)`), use the **binary representation of the exponent** to compute the answer in **`O(log n)`**.
+
+### Important Insight
+
+We **never explicitly convert** `n` into binary (like `"1101"`).
+
+The algorithm processes the binary representation **implicitly** using:
+
+* `n % 2` → checks the **last binary bit** (LSB).
+
+  * `1` → include the current power of `x` in the answer.
+  * `0` → skip it.
+* `n /= 2` → removes the last binary bit (equivalent to a right shift for positive integers).
+
+Example:
+
+```
+13 (decimal) = 1101 (binary)
+
+13 % 2 = 1  → use current x
+13 / 2 = 6
+
+6 % 2 = 0   → skip
+6 / 2 = 3
+
+3 % 2 = 1   → use current x
+3 / 2 = 1
+
+1 % 2 = 1   → use current x
+1 / 2 = 0
+```
+
+### Why `x *= x`?
+
+Each iteration moves to the next power of 2.
+
+```
+Initially : x = x¹
+1st loop  : x = x²
+2nd loop  : x = x⁴
+3rd loop  : x = x⁸
+4th loop  : x = x¹⁶
+...
+```
+
+### Why does this work?
+
+Every integer can be written as a sum of powers of 2.
+
+Example:
+
+```
+13 = 1101₂
+   = 8 + 4 + 1
+
+x¹³ = x⁸ × x⁴ × x¹
+```
+
+The algorithm multiplies only the powers corresponding to bits that are `1`.
+
+### Handling Negative Powers
+
+If `n < 0`:
+
+```cpp
+x = 1 / x;
+n = -n;
+```
+
+This uses the identity:
+
+```
+x⁻ⁿ = (1/x)ⁿ
+```
+
+### Time & Space Complexity
+
+* **Time:** `O(log n)`
+* **Space:** `O(1)`
+
+### Easy Way to Remember
+
+```
+while (n > 0)
+{
+    if (n is odd)      // last binary bit is 1
+        answer *= x;
+
+    x *= x;            // move to next power: x¹ → x² → x⁴ → x⁸ ...
+    n /= 2;            // remove the processed binary bit
+}
+```
+
+> **Memory Trick:** Think of the algorithm as reading the exponent's binary representation **from right to left**, one bit at a time, without ever converting it into a binary string.

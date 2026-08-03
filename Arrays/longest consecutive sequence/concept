@@ -1,0 +1,218 @@
+The constraints immediately tell us:
+* `O(n²)` will be too slow for `10^5` elements.
+* We should aim for **O(n)** or at worst **O(n log n)**.
+* Since values range from `-10^9` to `10^9`, we cannot use an array indexed by values.
+---
+# Initial Thought Process
+The first instinct is usually:
+> "For every number, keep checking whether the next consecutive number exists."
+For example,
+```
+1 2 3 4
+```
+Start from `1`
+```
+2 exists
+3 exists
+4 exists
+Length = 4
+```
+
+Then start from `2`
+```
+3 exists
+4 exists
+Length = 3
+```
+ans so on....
+
+Although correct, this repeats the same work multiple times.
+---
+# Brute Force
+
+For every element:
+* Search for `num + 1`
+* Then `num + 2`
+* Then `num + 3`
+* Continue until the sequence breaks.
+
+If searching is done by traversing the array every time,
+
+```
+Search = O(n)
+
+Outer Loop = O(n)
+
+Total = O(n²)
+```
+
+This exceeds the constraints.
+
+---
+
+# Key Observation (The Turning Point)
+
+The biggest optimization comes from asking:
+
+> **Do we really need to start checking from every element?**
+Consider
+```
+1 2 3 4
+```
+If we already started from `1`, then later starting again from
+```
+2
+3
+4
+```
+is completely unnecessary.
+So instead of asking
+
+> "Can this number start a sequence?"
+ask
+> **"Is this the beginning of a sequence?"**
+A number is the beginning of a sequence **only if its previous consecutive number does not exist.**
+
+Mathematically,
+```
+num - 1 should NOT exist.
+```
+Example:
+```
+1 2 3 4
+```
+```
+1 → previous number (0) doesn't exist
+✔ Start here
+```
+
+```
+2 → previous number (1) exists
+✖ Skip
+```
+
+```
+3 → previous number (2) exists
+✖ Skip
+```
+
+```
+4 → previous number (3) exists
+✖ Skip
+```
+
+Now every sequence is explored exactly once.
+
+This is the main idea behind the O(n) solution.
+
+---
+
+# Why use an unordered_set?
+Throughout the algorithm, we repeatedly ask questions like:
+```
+Does 5 exist?
+Does 27 exist?
+Does currentNum + 1 exist?
+```
+
+These are **existence checks**, not key-value lookups.
+`unordered_set` provides average **O(1)** lookup.
+
+Example:
+```cpp
+unordered_set<int> st(nums.begin(), nums.end());
+if(st.find(5) != st.end())
+```
+
+This takes constant time on average.
+
+---
+
+# Why not use unordered_map?
+
+A map stores **key-value pairs**.
+
+Example:
+
+```cpp
+unordered_map<int,int> mp;
+```
+
+stores
+
+```
+Key -> Value
+```
+
+such as
+
+```
+5 -> 10
+```
+
+But in this problem we never need a value.
+We only need to know
+> **"Does this number exist?"**
+There is nothing to store against each key.
+Using a map would waste memory because every key would have an unnecessary value.
+A set is designed exactly for this purpose.
+
+---
+
+# Why not use vector?
+Searching in a vector requires linear search.
+```
+find(nums.begin(), nums.end(), x)
+```
+takes O(n)
+```
+If this search is performed inside another loop,
+O(n × n) = O(n²)
+```
+which is too slow.
+
+---
+# Why not sort the array?
+Sorting gives another valid solution.
+Example:
+```
+100 4 200 1 3 2
+
+↓
+
+1 2 3 4 100 200
+```
+
+Then simply count consecutive numbers.
+Time Complexity:
+```
+Sorting = O(n log n)
+```
+
+This is accepted on LeetCode but **does not satisfy the follow-up requirement of O(n)**.
+
+---
+
+# Algorithm
+
+1. Insert every element into an `unordered_set`.
+2. Traverse every unique number in the set.
+3. Check whether `num - 1` exists.
+4. If it exists, skip because this number is in the middle of a sequence.
+5. Otherwise, this is the beginning of a new sequence.
+6. Keep checking whether `currentNum + 1` exists.
+7. Count the sequence length.
+8. Update the maximum answer.
+
+
+# Pattern Recognition
+Whenever a problem asks for:
+* Longest/shortest consecutive sequence
+* Fast existence checks
+* Order of elements doesn't matter
+* Average `O(1)` lookup is useful
+
+Think of using:
+* `unordered_set`
+* Start-of-sequence detection (`num - 1` doesn't exist)
+* Expand only in one direction
